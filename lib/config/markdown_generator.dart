@@ -19,6 +19,8 @@ class MarkdownGenerator {
   final SpanNodeBuilder? spanNodeBuilder;
   final RichTextBuilder? richTextBuilder;
   final RegExp? splitRegExp;
+  List<m.Node> allNodes = [];
+  List<String> allLines = [];
 
   MarkdownGenerator({
     this.inlineSyntaxList = const [],
@@ -46,7 +48,13 @@ class MarkdownGenerator {
     );
     final regExp = splitRegExp ?? WidgetVisitor.defaultSplitRegExp;
     final List<String> lines = data.split(regExp);
+
+    allLines.clear();
+    allLines.addAll(lines);
+
     final List<m.Node> nodes = document.parseLines(lines);
+    allNodes.clear();
+    allNodes.addAll(nodes);
     final List<Toc> tocList = [];
     final visitor = WidgetVisitor(
         config: mdConfig,
@@ -71,6 +79,16 @@ class MarkdownGenerator {
       widgets.add(Padding(padding: linesMargin, child: richText));
     }
     return widgets;
+  }
+
+  String getTextContent() {
+    String content = "";
+    for (var node in allNodes) {
+      content += "${node.textContent}\n";
+    }
+    print("getTextContent:");
+    print(content);
+    return content;
   }
 }
 
