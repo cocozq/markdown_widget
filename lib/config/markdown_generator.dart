@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:markdown/markdown.dart' as m;
 
-import '../widget/blocks/leaf/heading.dart';
-import '../widget/span_node.dart';
-import '../widget/widget_visitor.dart';
+import '../widget/all.dart';
 import 'configs.dart';
 import 'toc.dart';
 
@@ -20,8 +18,6 @@ class MarkdownGenerator {
   final RichTextBuilder? richTextBuilder;
   final RegExp? splitRegExp;
   List<m.Node> allNodes = [];
-  List<String> allLines = [];
-
   MarkdownGenerator({
     this.inlineSyntaxList = const [],
     this.blockSyntaxList = const [],
@@ -34,6 +30,8 @@ class MarkdownGenerator {
     this.richTextBuilder,
     this.splitRegExp,
   });
+
+  List<String> allLines = [];
 
   ///convert [data] to widgets
   ///[onTocList] can provider [Toc] list
@@ -82,13 +80,70 @@ class MarkdownGenerator {
   }
 
   String getTextContent() {
-    String content = "";
-    for (var node in allNodes) {
-      content += "${node.textContent}\n";
+    return allLines.join("\r\n");
+    // String content = "";
+    // for (var node in allNodes) {
+    //   content += "${node.textContent}\n";
+    // }
+    // print("getTextContent:");
+    // print(content);
+    // return content;
+  }
+
+  onCheckboxChanged(String text) {
+    var lineIndexArr = [];
+    int index = 0;
+    for (var line in allLines) {
+      if (line.contains(text)) {
+        lineIndexArr.add(index);
+      }
+      index++;
     }
-    print("getTextContent:");
-    print(content);
-    return content;
+
+    if (lineIndexArr.isNotEmpty) {
+      for (var index in lineIndexArr) {
+        var line = allLines[index];
+        if (line.contains("[x]")) {
+          allLines[index] = line.replaceFirst("[x]", "[ ]");
+        }
+        else if (line.contains("[ ]")){
+          allLines[index] = line.replaceFirst("[ ]", "[x]");
+        }
+      }
+    }
+
+    var taskElementArr = [];
+    for (var node in allNodes) {
+      var element = node as m.Element;
+      if (element.tag == "ul"
+          && element.attributes['class'] == 'contains-task-list'
+          && element.children?.isNotEmpty == true) {
+        taskElementArr.add(element);
+      }
+    }
+
+    if (taskElementArr.isNotEmpty) {
+      for (var element in taskElementArr) {
+        _checkboxContainer(element, text);
+      }
+    }
+  }
+
+  _checkboxContainer(m.Element nodeElement, String text) {
+    for (var child in nodeElement.children!) {
+      if (child.textContent == text && child is m.Element && child.children?.isNotEmpty == true) {
+        for (var node in child.children!) {
+          if (node is m.Element && node.tag == "input") {
+            if (node.attributes['checked'] == 'false') {
+              node.attributes['checked'] = 'true';
+            }
+            else {
+              node.attributes['checked'] = 'false';
+            }
+          }
+        }
+      }
+    }
   }
 }
 
