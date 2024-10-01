@@ -81,37 +81,10 @@ class MarkdownGenerator {
 
   String getTextContent() {
     return allLines.join("\r\n");
-    // String content = "";
-    // for (var node in allNodes) {
-    //   content += "${node.textContent}\n";
-    // }
-    // print("getTextContent:");
-    // print(content);
-    // return content;
   }
 
-  onCheckboxChanged(String text) {
-    var lineIndexArr = [];
-    int index = 0;
-    for (var line in allLines) {
-      if (line.contains(text)) {
-        lineIndexArr.add(index);
-      }
-      index++;
-    }
-
-    if (lineIndexArr.isNotEmpty) {
-      for (var index in lineIndexArr) {
-        var line = allLines[index];
-        if (line.contains("[x]")) {
-          allLines[index] = line.replaceFirst("[x]", "[ ]");
-        }
-        else if (line.contains("[ ]")){
-          allLines[index] = line.replaceFirst("[ ]", "[x]");
-        }
-      }
-    }
-
+  bool onCheckboxTaped(String text) {
+    var success = false;
     var taskElementArr = [];
     for (var node in allNodes) {
       var element = node as m.Element;
@@ -122,28 +95,63 @@ class MarkdownGenerator {
       }
     }
 
+    var tapedNodes = [];
     if (taskElementArr.isNotEmpty) {
       for (var element in taskElementArr) {
-        _checkboxContainer(element, text);
+        var nodes = _checkboxContainer(element, text);
+        if (nodes.isNotEmpty) {
+          tapedNodes.addAll(nodes);
+        }
       }
     }
-  }
 
-  _checkboxContainer(m.Element nodeElement, String text) {
-    for (var child in nodeElement.children!) {
-      if (child.textContent == text && child is m.Element && child.children?.isNotEmpty == true) {
-        for (var node in child.children!) {
-          if (node is m.Element && node.tag == "input") {
-            if (node.attributes['checked'] == 'false') {
-              node.attributes['checked'] = 'true';
-            }
-            else {
-              node.attributes['checked'] = 'false';
-            }
+    if (tapedNodes.length == 1) {
+      var lineIndexArr = [];
+      int index = 0;
+      for (var line in allLines) {
+        if (line.contains(text)) {
+          lineIndexArr.add(index);
+        }
+        index++;
+      }
+
+      if (lineIndexArr.isNotEmpty) {
+        for (var index in lineIndexArr) {
+          var line = allLines[index];
+          if (line.contains("[x]")) {
+            allLines[index] = line.replaceFirst("[x]", "[ ]");
+            success = true;
+          }
+          else if (line.contains("[ ]")){
+            allLines[index] = line.replaceFirst("[ ]", "[x]");
+            success = true;
           }
         }
       }
     }
+
+    return success;
+  }
+
+  List _checkboxContainer(m.Element nodeElement, String text) {
+    var tapedNodes = [];
+    for (var child in nodeElement.children!) {
+      if (child.textContent == text && child is m.Element && child.children?.isNotEmpty == true) {
+        tapedNodes.add(child);
+        // for (var node in child.children!) {
+        //   if (node is m.Element && node.tag == "input") {
+        //     if (node.attributes['checked'] == 'false') {
+        //       node.attributes['checked'] = 'true';
+        //     }
+        //     else {
+        //       node.attributes['checked'] = 'false';
+        //     }
+        //   }
+        // }
+      }
+    }
+
+    return tapedNodes;
   }
 }
 
